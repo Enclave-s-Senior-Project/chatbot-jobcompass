@@ -14,3 +14,6 @@ requests==2.32.3
 pydantic==2.9.2
 pgvector==0.3.6
 transformers==4.51.3 
+langchain_postgres==0.0.14
+langchain-google-genai==1.0.8
+grpcio==1.71.0

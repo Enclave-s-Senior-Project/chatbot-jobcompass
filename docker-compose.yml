@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  boilerplate_db:
-    container_name: boilerplate_db
+  vector_db:
+    container_name: vector_db
     image: ankane/pgvector
     restart: always
     env_file:
