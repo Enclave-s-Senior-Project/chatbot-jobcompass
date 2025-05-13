@@ -1,0 +1,13 @@
+# vscode configuration
+.vscode/*
+
+# environment variables
+.env
+.env*
+!.env.example
+
+# packages
+.venv/*
+
+# python cache
+__pycache__/*

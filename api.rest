@@ -1,0 +1,15 @@
+### Test the chat endpoint
+POST http://localhost:8000/chat
+Content-Type: application/json
+
+{
+    "query": "Tell me a little about this website?"
+}
+
+### test
+GET http://localhost:8000/test HTTP/1.1
+content-type: application/json
+
+{
+    
+}
