@@ -154,7 +154,6 @@ for job in jobs:
     ) = job
 
     # Clean and summarize fields
-    clean_requirement = summarize_requirements(clean_html(requirement))
 
     # Extract category, tag, specialization names
     categories = [cat["name"] for cat in job_categories] if job_categories else []
@@ -168,14 +167,27 @@ for job in jobs:
         f"Job Title: {job_name}\n"
         f"Type: {job_type}\n"
         f"Company: {enterprise_name}\n"
-        f"Requirements: {clean_requirement}\n"
+        f"Requirements: {requirement}\n"
+        f"Deadline: {deadline}\n"
+        f"Education: {education}\n"
+        f"Experience: {experience}\n"
+        f"Highest Wage: {highest_wage}\n"
+        f"Lowest Wage: {lowest_wage}\n"
+        f"Status: {job_status}\n"
+        f"Company Organization: {organization_type}\n"
+        f"Company Status: {enterprise_status}\n"
+        f"Keywords: {', '.join(tags)}\n"
     )
     if categories:
-        content += f"Categories: {', '.join(categories)}\n"
+        content += f"Categories/Industries: {', '.join(categories)}\n"
     if tags:
         content += f"Tags: {', '.join(tags)}\n"
     if specializations:
         content += f"Specializations: {', '.join(specializations)}\n"
+    if job_addresses:
+        content += (
+            f"Address: {job_addresses[0]['city']}, {job_addresses[0]['country']}\n"
+        )
 
     # Metadata
     city = job_addresses[0]["city"] if job_addresses and len(job_addresses) > 0 else ""

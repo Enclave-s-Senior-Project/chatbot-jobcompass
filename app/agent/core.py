@@ -10,5 +10,6 @@ agent = initialize_agent(
     llm=llm,
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
+    temperature=0.8,
     agent_kwargs={"prompt": agent_prompt},
 )  # A zero shot agent that does a reasoning step before acting. verbose=True to see the agent's thought process (logging).
