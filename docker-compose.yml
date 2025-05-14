@@ -1,22 +1,22 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  vector_db:
-    container_name: vector_db
-    image: ankane/pgvector
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_USER=${TYPEORM_USERNAME}
-      - POSTGRES_PASSWORD=${TYPEORM_PASSWORD}
-      - POSTGRES_DB=${TYPEORM_DATABASE}
-      - PG_DATA=/var/lib/postgresql/data
-    ports:
-      - '${TYPEORM_PORT}:5432'
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    vector_db:
+        container_name: vector_db
+        image: ankane/pgvector
+        restart: always
+        env_file:
+            - .env
+        environment:
+            - POSTGRES_USER=${VECTOR_DB_USERNAME}
+            - POSTGRES_PASSWORD=${VECTOR_DB_PASSWORD}
+            - POSTGRES_DB=${VECTOR_DB_DATABASE}
+            - PG_DATA=/var/lib/postgresql/data
+        ports:
+            - "${VECTOR_DB_PORT}:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
-    driver: local
+    pgdata:
+        driver: local

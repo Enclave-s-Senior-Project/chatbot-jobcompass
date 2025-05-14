@@ -1,11 +1,11 @@
 from langchain.agents import Tool
-from ..vectorstore import vector_store
+from app.vectorstore import website_content_vector_store
 
 
 # Website search tool
 def website_search(query):
     try:
-        docs = vector_store.similarity_search(query, k=3)
+        docs = website_content_vector_store.similarity_search(query, k=3)
         if not docs:
             return "No relevant website content found."
         return "\n\n".join(

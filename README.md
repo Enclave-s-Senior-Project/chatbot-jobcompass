@@ -46,15 +46,15 @@ pip install -r requirements.txt
 OPENAI_API_KEY=your_openai_api_key
 
 # Database
-TYPEORM_CONNECTION=postgres
-TYPEORM_HOST=localhost
-TYPEORM_USERNAME=postgres
-TYPEORM_PASSWORD=your_password
-TYPEORM_DATABASE=your_database
-TYPEORM_PORT=5432
-TYPEORM_AUTOLOAD=true
-TYPEORM_SYNCHRONIZE=true
-TYPEORM_LOGGING=false
+VECTOR_DB_CONNECTION=postgres
+VECTOR_DB_HOST=localhost
+VECTOR_DB_USERNAME=postgres
+VECTOR_DB_PASSWORD=your_password
+VECTOR_DB_DATABASE=your_database
+VECTOR_DB_PORT=5432
+VECTOR_DB_AUTOLOAD=true
+VECTOR_DB_SYNCHRONIZE=true
+VECTOR_DB_LOGGING=false
 ```
 
 5. Set up PostgreSQL with pgvector:
