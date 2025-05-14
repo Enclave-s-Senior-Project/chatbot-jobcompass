@@ -1,45 +1,65 @@
-# AI Chatbot with Website and Database Integration
+# JobCompass AI Chatbot
 
-This project implements an AI-powered chatbot that can answer questions based on both website content and database information. It uses LangChain, FastAPI, and PostgreSQL with vector storage for efficient semantic search.
+A sophisticated AI-powered chatbot designed to assist users with job search and career guidance. The system combines website content analysis, database integration, and advanced AI capabilities to provide personalized career advice and job search assistance.
 
 ## Features
 
--   Semantic search over website content using HuggingFace embeddings
--   Database querying capabilities
--   LLM powered responses
--   FastAPI REST API
+-   Semantic search over job listings and career resources using advanced embeddings
+-   Real-time database querying for job market insights
+-   LLM-powered responses with context-aware career guidance
+-   FastAPI REST API with comprehensive documentation
 -   PostgreSQL vector storage for efficient similarity search
+-   Modern React frontend with real-time chat interface
+-   Responsive design for all devices
 
 ## Prerequisites
 
 -   Python 3.12+
 -   PostgreSQL 12+ with pgvector extension
 -   OpenAI API key
--   Node.js and npm (for website content)
+-   Node.js 18+ and npm (for frontend development)
 
 ## Installation
 
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd chatbot
+git clone https://github.com/yourusername/jobcompass.git
+cd jobcompass
 ```
 
-2. Create and activate a virtual environment:
+2. Set up the backend:
 
 ```bash
+# Create and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Set up environment variables in .env
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-3. Install dependencies:
+3. Set up the frontend:
 
 ```bash
-pip install -r requirements.txt
+# Install frontend dependencies
+cd frontend
+npm install
 ```
 
-4. Set up environment variables in `.env`:
+4. Set up PostgreSQL with pgvector:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+## Configuration
+
+Create a `.env` file in the root directory with the following variables:
 
 ```env
 # OpenAI
@@ -55,64 +75,72 @@ VECTOR_DB_PORT=5432
 VECTOR_DB_AUTOLOAD=true
 VECTOR_DB_SYNCHRONIZE=true
 VECTOR_DB_LOGGING=false
-```
 
-5. Set up PostgreSQL with pgvector:
-
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
+# Frontend
+VITE_API_URL=http://localhost:8000
 ```
 
 ## Usage
 
-1. Start the FastAPI server:
+1. Start the backend server:
 
 ```bash
+# From the root directory
 uvicorn main:app --reload
 ```
 
-2. The API will be available at `http://localhost:8000`
-
-3. API Endpoints:
-
-    - POST `/chat`: Send chat messages
-    - GET `/test`: Test endpoint
-
-4. Example API call:
+2. Start the frontend development server:
 
 ```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is the main topic of the website?"}'
+# From the frontend directory
+npm run dev
 ```
+
+3. Access the application:
+    - Frontend: http://localhost:5173
+    - API Documentation: http://localhost:8000/docs
 
 ## Project Structure
 
 ```
-chatbot/
-├── main.py              # FastAPI application and chat endpoint
-├── index.py            # Website content indexing
-├── constants.py        # Configuration and constants
-├── requirements.txt    # Python dependencies
-└── .env               # Environment variables
+jobcompass/
+├── frontend/           # React frontend application
+│   ├── src/           # Source files
+│   ├── public/        # Static assets
+│   └── package.json   # Frontend dependencies
+├── main.py            # FastAPI application entry point
+├── index.py           # Content indexing and processing
+├── constants.py       # Configuration and constants
+├── requirements.txt   # Python dependencies
+└── .env              # Environment variables
 ```
 
 ## Dependencies
 
--   FastAPI: Web framework
--   LangChain: AI/ML framework
--   PostgreSQL: Database
--   pgvector: Vector similarity search
--   HuggingFace: Embeddings model
--   OpenAI: Gemini Flash 2.0
+### Backend
+
+-   FastAPI: Modern web framework for building APIs
+-   LangChain: Framework for LLM applications
+-   PostgreSQL: Advanced database system
+-   pgvector: Vector similarity search extension
+-   HuggingFace: Embeddings and models
+-   OpenAI: Language model integration
+
+### Frontend
+
+-   React: UI library
+-   Vite: Build tool and development server
+-   TailwindCSS: Utility-first CSS framework
+-   TypeScript: Type-safe JavaScript
+-   Axios: HTTP client
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
