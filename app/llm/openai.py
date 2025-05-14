@@ -8,4 +8,5 @@ llm = ChatOpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
     temperature=0.5,
     max_retries=3,
+    streaming=True,
 )
