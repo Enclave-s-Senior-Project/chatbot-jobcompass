@@ -1,11 +1,11 @@
 from langchain.agents import Tool
 from langchain_community.utilities import SQLDatabase
-from constants import vector_database_url
+from constants import main_database_url
 import json
 
 
 # Database tool
-db = SQLDatabase.from_uri(database_uri=vector_database_url)
+db = SQLDatabase.from_uri(database_uri=main_database_url)
 
 
 def database_query(query):

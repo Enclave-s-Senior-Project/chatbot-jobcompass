@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Poppins", sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+            }
+
+            .wrapper {
+                width: 50vw;
+            }
+
+            .wrapper .title {
+                background: #007bff;
+                color: white;
+                line-height: 2.5;
+                border-radius: 5px 5px 0 0;
+                text-align: center;
+                font-size: 20px;
+            }
+
+            .wrapper .box {
+                border: 1px solid #efefef;
+                padding: 10px 15px;
+                min-height: 400px;
+                max-height: 400px;
+                overflow-y: auto;
+            }
+
+            .wrapper .box .item {
+                display: flex;
+                float: left;
+                margin: 10px 0;
+            }
+
+            .wrapper .box .item .icon {
+                background: #007bff;
+                color: white;
+                width: 40px;
+                height: 40px;
+                text-align: center;
+                line-height: 40px;
+                border-radius: 50%;
+            }
+
+            .wrapper .box .item .msg {
+                background: #007bff;
+                color: white;
+                border-radius: 10px;
+                width: 80%;
+                margin-left: 10px;
+            }
+
+            .wrapper .box .item .msg p {
+                padding: 10px;
+            }
+
+            .wrapper .box .item.right {
+                float: right;
+            }
+
+            .wrapper .box .item.right .msg {
+                background: #efefef;
+                color: #333;
+            }
+
+            .wrapper .typing-area {
+                width: 100%;
+                background: #efefef;
+                height: 50px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 10px;
+            }
+
+            .wrapper .typing-area .input-field {
+                width: 100%;
+                position: relative;
+            }
+
+            .wrapper .typing-area .input-field input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid transparent;
+                border-radius: 3px;
+                outline: none;
+                padding-right: 70px;
+                font-family: "Poppins", sans-serif;
+                transition: 0.3s all ease;
+            }
+
+            .wrapper .typing-area .input-field input:focus {
+                border-color: #007bff;
+            }
+
+            .wrapper .typing-area .input-field button {
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                background: transparent;
+                border: 1px solid #007bff;
+                padding: 5px 10px;
+                border-radius: 3px;
+                color: #007bff;
+                outline: none;
+                cursor: pointer;
+                opacity: 0;
+                pointer-events: none;
+                transition: 0.3s all ease;
+            }
+
+            .wrapper .typing-area .input-field button:hover {
+                background: #007bff;
+                color: white;
+            }
+
+            .wrapper .typing-area .input-field input:valid ~ button {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        </style>
+        <title>AI Chatbot</title>
+    </head>
+    <body>
+        <div class="wrapper">
+            <div class="title">Simple Chatbot</div>
+            <div class="box" id="chat-box"></div>
+
+            <form class="typing-area" id="chat-form">
+                <div class="input-field">
+                    <input type="text" id="user-input" placeholder="Type your message" required />
+                    <button type="submit">Send</button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            const form = document.getElementById("chat-form");
+            const chatBox = document.getElementById("chat-box");
+            const userInput = document.getElementById("user-input");
+            let chatHistory = [];
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const message = userInput.value.trim();
+                if (!message) return;
+
+                // Add user message to UI
+                addMessageToUI("right", message);
+
+                // Clear input field
+                userInput.value = "";
+
+                try {
+                    // Show loading indicator
+                    const loadingItem = document.createElement("div");
+                    loadingItem.className = "item";
+                    loadingItem.innerHTML = `
+                        <div class="icon">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <div class="msg">
+                            <p>Thinking...</p>
+                        </div>
+                    `;
+                    chatBox.appendChild(loadingItem);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+
+                    // Add user message to chat history
+                    chatHistory.push({ type: "human", content: message });
+
+                    // Send request to backend
+                    const response = await fetch("/conversation/ask", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            query: message,
+                            chat_history: chatHistory,
+                        }),
+                    });
+
+                    // Remove loading indicator
+                    chatBox.removeChild(loadingItem);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Update chat history with the response from server
+                    chatHistory = data.chat_history;
+
+                    // Add AI response to UI
+                    addMessageToUI("", data.response);
+                } catch (error) {
+                    console.error("Error:", error);
+                    addMessageToUI("", "Sorry, there was an error processing your request.");
+                }
+            });
+
+            function addMessageToUI(className, message) {
+                const item = document.createElement("div");
+                item.className = className ? `item ${className}` : "item";
+
+                if (className === "right") {
+                    // User message (right-aligned)
+                    item.innerHTML = `
+                        <div class="msg">
+                            <p>${message}</p>
+                        </div>
+                    `;
+                } else {
+                    // AI message (left-aligned with icon)
+                    item.innerHTML = `
+                        <div class="icon">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <div class="msg">
+                            <p>${message}</p>
+                        </div>
+                    `;
+                }
+
+                chatBox.appendChild(item);
+
+                // Add clear break after each message
+                const br = document.createElement("br");
+                br.setAttribute("clear", "both");
+                chatBox.appendChild(br);
+
+                // Scroll to bottom of chat box
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        </script>
+    </body>
+</html>

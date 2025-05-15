@@ -3,9 +3,9 @@ from langchain_core.documents import Document
 from app.vectorstore import job_vector_store
 from constants import main_database_url
 from contextlib import contextmanager
-from bs4 import BeautifulSoup
+from utils.format_salary import format_salary
 import psycopg2
-import json
+import torch
 
 
 # Database connection
@@ -18,36 +18,159 @@ def get_db_connection():
         conn.close()
 
 
-# Embedding model
+# Enhanced embedding model with better job-specific capabilities
 embeddings_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="sentence-transformers/all-MiniLM-L12-v2",
+    model_kwargs={"device": "cuda" if torch.cuda.is_available() else "cpu"},
+    encode_kwargs={"normalize_embeddings": True, "precision": "fp16"},
 )
 
 
-# Clean HTML and summarize text
-def clean_html(text):
-    if not text:
-        return ""
-    soup = BeautifulSoup(text, "html.parser")
-    return soup.get_text(separator=" ", strip=True)
+# def extract_key_requirements(text: str) -> str:
+#     """Extract and summarize key job requirements."""
+#     if not text:
+#         return ""
+
+#     # Define key requirement patterns
+#     patterns = [
+#         r"(?i)(\d+)\+?\s*(?:years?|yrs?)\s*(?:of)?\s*experience",
+#         r"(?i)(?:bachelor|master|phd|degree|diploma)s?\s*(?:in|of)?\s*[a-zA-Z\s]+",
+#         r"(?i)(?:proficient|expert|skilled)\s*(?:in|with)?\s*[a-zA-Z\s,]+",
+#         r"(?i)(?:knowledge|experience)\s*(?:of|with)?\s*[a-zA-Z\s,]+",
+#         r"(?i)(?:certification|certified)\s*(?:in|as)?\s*[a-zA-Z\s,]+",
+#         r"(?i)(?:fluent|native)\s*(?:in|with)?\s*[a-zA-Z\s,]+",
+#     ]
+
+#     # Extract matching requirements
+#     requirements = []
+#     for pattern in patterns:
+#         matches = re.finditer(pattern, text)
+#         for match in matches:
+#             req = match.group(0).strip()
+#             if req not in requirements:
+#                 requirements.append(req)
+
+#     # If no specific requirements found, take first 3 sentences
+#     if not requirements:
+#         sentences = text.split(".")
+#         requirements = [s.strip() for s in sentences[:3] if s.strip()]
+
+#     return ". ".join(requirements[:5])[:300]
 
 
-def summarize_requirements(text):
-    if not text:
-        return ""
-    lines = text.split(". ")
-    key_phrases = []
-    for line in lines[:10]:  # Limit to first 10 sentences
-        if any(
-            keyword in line.lower()
-            for keyword in ["degree", "experience", "certification", "fluency", "years"]
-        ):
-            key_phrases.append(line.strip())
-    return ". ".join(key_phrases[:5])[:300]  # Limit to 5 phrases, 300 chars
+def create_job_document(job_data: tuple) -> Document:
+    """Create a well-structured document for job embedding."""
+    # Unpack job data
+    (
+        job_id,
+        job_name,
+        job_type,
+        deadline,
+        education,
+        experience,
+        highest_wage,
+        lowest_wage,
+        job_status,
+        enterprise_name,
+        organization_type,
+        is_premium,
+        is_trial,
+        enterprise_status,
+        points_used,
+        job_categories,
+        job_specializations,
+        job_tags,
+        job_addresses,
+    ) = job_data
+
+    # # Clean and process text fields
+    # requirement = clean_html(requirement)
+    # key_requirements = extract_key_requirements(requirement)
+
+    # Extract and format metadata
+    # Handle case where JSON_AGG returns a non-iterable value
+    try:
+        categories = (
+            [cat["name"] for cat in job_categories]
+            if job_categories and isinstance(job_categories, list)
+            else []
+        )
+    except (TypeError, AttributeError):
+        categories = []
+
+    try:
+        tags = (
+            [tag["name"] for tag in job_tags]
+            if job_tags and isinstance(job_tags, list)
+            else []
+        )
+    except (TypeError, AttributeError):
+        tags = []
+
+    try:
+        specializations = (
+            [spec["name"] for spec in job_specializations]
+            if job_specializations and isinstance(job_specializations, list)
+            else []
+        )
+    except (TypeError, AttributeError):
+        specializations = []
+
+    # Format location
+    location = ""
+    if job_addresses and isinstance(job_addresses, list) and len(job_addresses) > 0:
+        try:
+            city = job_addresses[0].get("city", "")
+            country = job_addresses[0].get("country", "")
+            location = f"{city}, {country}" if city and country else city or country
+        except (TypeError, AttributeError):
+            location = ""
+
+    # Create structured content
+    content = f"""
+    Job Title: {job_name}
+    Type: {job_type}
+    Company: {enterprise_name}
+    Company Type: {organization_type}
+    Company Status: {enterprise_status}
+    Location: {location}
+    Salary Range: {format_salary(lowest_wage, highest_wage)}
+    Education: {education}
+    Experience: {experience} years
+    Deadline: {deadline}
+    Status: {job_status}
+    Categories: {', '.join(categories)}
+    Specializations: {', '.join(specializations)}
+    Tags: {', '.join(tags)}
+    Boosted Points Used: {points_used or 0}
+    """
+    print("job data", job_data)
+    # Enhanced metadata
+    metadata = {
+        "job_id": str(job_id),
+        "job_name": job_name,
+        "company": enterprise_name or "",
+        "location": location,
+        "experience": experience or 0,
+        "education": education or "",
+        "status": job_status or "",
+        "salary_range": {"min": lowest_wage or 0, "max": highest_wage or 0},
+        "categories": categories,
+        "tags": tags,
+        "specializations": specializations,
+        "deadline": str(deadline) if deadline else "",
+        "is_premium": is_premium or False,
+        "is_trial": is_trial or False,
+        "organization_type": organization_type or "",
+        "enterprise_status": enterprise_status or "",
+        "points_used": points_used or 0,
+    }
+
+    return Document(page_content=content, metadata=metadata)
 
 
-# Fetch jobs with related data
 def fetch_jobs():
+    """Fetch jobs with related data from database."""
     print("Fetching jobs...")
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
@@ -63,13 +186,12 @@ def fetch_jobs():
                     jb.highest_wage,
                     jb.lowest_wage,
                     jb.status as job_status,
-                    jb.requirement,
-                    en.enterprise_id,
                     en.name as enterprise_name,
+                    en.organization_type,
                     en.is_premium,
                     en.is_trial,
-                    en.organization_type,
                     en.status as enterprise_status,
+                    COALESCE(bjb.points_used, 0) as points_used,
                     JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(
                         'id', ct1.category_id,
                         'name', ct1.category_name
@@ -101,7 +223,8 @@ def fetch_jobs():
                 LEFT JOIN tags tg ON tg.tag_id = jbt.tag_id
                 LEFT JOIN job_addresses jba ON jba.job_id = jb.job_id
                 LEFT JOIN addresses ad ON ad.address_id = jba.address_id
-                WHERE jb.is_active = TRUE
+                LEFT JOIN boosted_jobs bjb ON bjb.job_id = jb.job_id
+                WHERE jb.status = 'OPEN' and en.status = 'ACTIVE'
                 GROUP BY 
                     jb.job_id, 
                     jb.name, 
@@ -118,123 +241,54 @@ def fetch_jobs():
                     en.is_premium,
                     en.is_trial,
                     en.organization_type,
-                    en.status
+                    en.status,
+                    bjb.points_used
                 """
             )
-            results = cursor.fetchall()
-            return results
+            return cursor.fetchall()
 
 
-# Create documents for embedding
-jobs = fetch_jobs()
-documents = []
-print("Creating documents...")
-for job in jobs:
-    (
-        job_id,
-        job_name,
-        job_type,
-        deadline,
-        education,
-        experience,
-        highest_wage,
-        lowest_wage,
-        job_status,
-        requirement,
-        enterprise_id,
-        enterprise_name,
-        is_premium,
-        is_trial,
-        organization_type,
-        enterprise_status,
-        job_categories,
-        job_specializations,
-        job_tags,
-        job_addresses,
-    ) = job
+def main():
+    """Main function to process and embed jobs."""
+    # Fetch jobs
+    jobs = fetch_jobs()
 
-    # Clean and summarize fields
+    # Create documents
+    print("Creating documents...")
+    documents = [create_job_document(job) for job in jobs]
 
-    # Extract category, tag, specialization names
-    categories = [cat["name"] for cat in job_categories] if job_categories else []
-    tags = [tag["name"] for tag in job_tags] if job_tags else []
-    specializations = (
-        [spec["name"] for spec in job_specializations] if job_specializations else []
-    )
+    # Add to vector store
+    print("Adding documents to vector store...")
+    job_vector_store.add_documents(documents)
 
-    # Combine fields for embedding
-    content = (
-        f"Job Title: {job_name}\n"
-        f"Type: {job_type}\n"
-        f"Company: {enterprise_name}\n"
-        f"Requirements: {requirement}\n"
-        f"Deadline: {deadline}\n"
-        f"Education: {education}\n"
-        f"Experience: {experience}\n"
-        f"Highest Wage: {highest_wage}\n"
-        f"Lowest Wage: {lowest_wage}\n"
-        f"Status: {job_status}\n"
-        f"Company Organization: {organization_type}\n"
-        f"Company Status: {enterprise_status}\n"
-        f"Keywords: {', '.join(tags)}\n"
-    )
-    if categories:
-        content += f"Categories/Industries: {', '.join(categories)}\n"
-    if tags:
-        content += f"Tags: {', '.join(tags)}\n"
-    if specializations:
-        content += f"Specializations: {', '.join(specializations)}\n"
-    if job_addresses:
-        content += (
-            f"Address: {job_addresses[0]['city']}, {job_addresses[0]['country']}\n"
-        )
-
-    # Metadata
-    city = job_addresses[0]["city"] if job_addresses and len(job_addresses) > 0 else ""
-    country = (
-        job_addresses[0]["country"] if job_addresses and len(job_addresses) > 0 else ""
-    )
-    metadata = {
-        "job_id": str(job_id),
-        "company": enterprise_name or "",
-        "city": city,
-        "country": country,
-        "experience": experience or 0,
-        "education": education or "",
-        "status": job_status or "",
-        "lowest_wage": lowest_wage or 0,
-        "highest_wage": highest_wage or 0,
-        "categories": job_categories or [],
-        "tags": job_tags or [],
-        "specializations": job_specializations or [],
-        "deadline": str(deadline) if deadline else "",
-        "is_premium": is_premium or False,
-        "is_trial": is_trial or False,
-        "organization_type": organization_type or "",
-        "enterprise_status": enterprise_status or "",
-    }
-
-    documents.append(Document(page_content=content, metadata=metadata))
-
-# Add documents to vector store
-print("Adding documents to vector store...")
-# job_vector_store.delete_collection()  # Optional: clear existing collection
-job_vector_store.add_documents(documents)
-
-# Create IVFFlat index
-with get_db_connection() as conn:
-    with conn.cursor() as cur:
-        cur.execute(
+    # Create optimized IVFFlat index
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            # Drop existing index if it exists
+            cur.execute(
+                """
+                DROP INDEX IF EXISTS idx_job_listings_embedding;
             """
-            CREATE INDEX IF NOT EXISTS idx_job_listings_embedding
-            ON langchain_pg_embedding
-            USING ivfflat (embedding vector_cosine_ops)
-            WITH (lists = 4)
-            WHERE collection_id = (
-                SELECT id FROM langchain_pg_collection WHERE name = 'job_listings'
-            );
-            """
-        )
-        conn.commit()
+            )
 
-print(f"Indexed {len(documents)} jobs into pgvector collection 'job_listings'.")
+            # Create optimized index
+            cur.execute(
+                """
+                CREATE INDEX idx_job_listings_embedding
+                ON langchain_pg_embedding
+                USING ivfflat (embedding vector_cosine_ops)
+                WITH (lists = 100)
+                WHERE collection_id = (
+                    SELECT id FROM langchain_pg_collection WHERE name = 'job_listings'
+                );
+            """
+            )
+            conn.commit()
+
+    print(
+        f"Successfully indexed {len(documents)} jobs into pgvector collection 'job_listings'."
+    )
+
+
+if __name__ == "__main__":
+    main()
