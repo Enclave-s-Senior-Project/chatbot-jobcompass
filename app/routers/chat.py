@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from app.agent.core import agent_executor
+from app.agent.core import route_to_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -54,10 +54,8 @@ async def chat(request: ChatRequest):
                 chat_history.append(AIMessage(content=msg.content))
                 memory.save_context({"input": ""}, {"output": msg.content})
 
-    # Run agent executor with function calling
-    response = agent_executor.invoke(
-        {"input": request.query, "chat_history": chat_history}
-    )
+    # Use the agent router to direct to the appropriate specialized agent
+    response = route_to_agent(request.query, chat_history)
 
     # Get updated chat history
     history = []
