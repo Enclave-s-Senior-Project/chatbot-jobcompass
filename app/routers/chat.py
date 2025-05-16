@@ -7,6 +7,8 @@ from app.agent.core import route_to_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import HumanMessage, AIMessage
 
+from utils.api_client import get_enterprise_details
+
 
 chat_router = APIRouter(prefix="/conversation")
 

@@ -1,18 +1,21 @@
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres import PGVector
 from constants import vector_database_url
-
-
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+from app.llm import embeddings_model
 
 website_content_vector_store = PGVector(
     collection_name="website_content",
     connection=vector_database_url,
-    embeddings=embeddings,
+    embeddings=embeddings_model,
 )
 
 job_vector_store = PGVector(
     collection_name="job_listings",
     connection=vector_database_url,
-    embeddings=embeddings,
+    embeddings=embeddings_model,
+)
+
+enterprise_vector_store = PGVector(
+    collection_name="enterprise_listings",
+    connection=vector_database_url,
+    embeddings=embeddings_model,
 )
