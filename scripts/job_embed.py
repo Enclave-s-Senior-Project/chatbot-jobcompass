@@ -3,6 +3,7 @@ from langchain_core.documents import Document
 from app.vectorstore import job_vector_store
 from constants import main_database_url
 from contextlib import contextmanager
+from utils.clean_html import clean_html
 from utils.format_salary import format_salary
 import psycopg2
 import torch
@@ -26,38 +27,6 @@ embeddings_model = HuggingFaceEmbeddings(
 )
 
 
-# def extract_key_requirements(text: str) -> str:
-#     """Extract and summarize key job requirements."""
-#     if not text:
-#         return ""
-
-#     # Define key requirement patterns
-#     patterns = [
-#         r"(?i)(\d+)\+?\s*(?:years?|yrs?)\s*(?:of)?\s*experience",
-#         r"(?i)(?:bachelor|master|phd|degree|diploma)s?\s*(?:in|of)?\s*[a-zA-Z\s]+",
-#         r"(?i)(?:proficient|expert|skilled)\s*(?:in|with)?\s*[a-zA-Z\s,]+",
-#         r"(?i)(?:knowledge|experience)\s*(?:of|with)?\s*[a-zA-Z\s,]+",
-#         r"(?i)(?:certification|certified)\s*(?:in|as)?\s*[a-zA-Z\s,]+",
-#         r"(?i)(?:fluent|native)\s*(?:in|with)?\s*[a-zA-Z\s,]+",
-#     ]
-
-#     # Extract matching requirements
-#     requirements = []
-#     for pattern in patterns:
-#         matches = re.finditer(pattern, text)
-#         for match in matches:
-#             req = match.group(0).strip()
-#             if req not in requirements:
-#                 requirements.append(req)
-
-#     # If no specific requirements found, take first 3 sentences
-#     if not requirements:
-#         sentences = text.split(".")
-#         requirements = [s.strip() for s in sentences[:3] if s.strip()]
-
-#     return ". ".join(requirements[:5])[:300]
-
-
 def create_job_document(job_data: tuple) -> Document:
     """Create a well-structured document for job embedding."""
     # Unpack job data
@@ -71,6 +40,10 @@ def create_job_document(job_data: tuple) -> Document:
         highest_wage,
         lowest_wage,
         job_status,
+        requirement,
+        description,
+        responsibility,
+        job_benefits,
         enterprise_name,
         organization_type,
         is_premium,
@@ -83,12 +56,8 @@ def create_job_document(job_data: tuple) -> Document:
         job_addresses,
     ) = job_data
 
-    # # Clean and process text fields
-    # requirement = clean_html(requirement)
-    # key_requirements = extract_key_requirements(requirement)
-
     # Extract and format metadata
-    # Handle case where JSON_AGG returns a non-iterable value
+    # Handle parse categories from queries
     try:
         categories = (
             [cat["name"] for cat in job_categories]
@@ -98,6 +67,7 @@ def create_job_document(job_data: tuple) -> Document:
     except (TypeError, AttributeError):
         categories = []
 
+    # Handle parse tags from queries
     try:
         tags = (
             [tag["name"] for tag in job_tags]
@@ -107,6 +77,7 @@ def create_job_document(job_data: tuple) -> Document:
     except (TypeError, AttributeError):
         tags = []
 
+    # Handle parse specializations from queries
     try:
         specializations = (
             [spec["name"] for spec in job_specializations]
@@ -116,15 +87,24 @@ def create_job_document(job_data: tuple) -> Document:
     except (TypeError, AttributeError):
         specializations = []
 
-    # Format location
-    location = ""
+    # Handle parse addresses from queries
+    locations = []
     if job_addresses and isinstance(job_addresses, list) and len(job_addresses) > 0:
         try:
-            city = job_addresses[0].get("city", "")
-            country = job_addresses[0].get("country", "")
-            location = f"{city}, {country}" if city and country else city or country
+            for address in job_addresses:
+                city = address.get("city", "")
+                country = address.get("country", "")
+
+                location = ""
+                if city and country:
+                    location = f"{city}, {country}"
+                elif city:
+                    location = city
+                elif country:
+                    location = country
+                locations.append(location)
         except (TypeError, AttributeError):
-            location = ""
+            locations = []
 
     # Create structured content
     content = f"""
@@ -133,7 +113,7 @@ def create_job_document(job_data: tuple) -> Document:
     Company: {enterprise_name}
     Company Type: {organization_type}
     Company Status: {enterprise_status}
-    Location: {location}
+    Location: {" ;".join(locations) if len(locations) > 0 else "Remote"}
     Salary Range: {format_salary(lowest_wage, highest_wage)}
     Education: {education}
     Experience: {experience} years
@@ -142,9 +122,14 @@ def create_job_document(job_data: tuple) -> Document:
     Categories: {', '.join(categories)}
     Specializations: {', '.join(specializations)}
     Tags: {', '.join(tags)}
+    Description: {clean_html(description)}
+    Responsibilities: {clean_html(responsibility)}
+    Requirements: {clean_html(requirement)}
+    Benefits: {clean_html(job_benefits)}
+    Priority: {is_premium or is_trial}
     Boosted Points Used: {points_used or 0}
     """
-    print("job data", job_data)
+
     # Enhanced metadata
     metadata = {
         "job_id": str(job_id),
@@ -163,6 +148,12 @@ def create_job_document(job_data: tuple) -> Document:
         "is_trial": is_trial or False,
         "organization_type": organization_type or "",
         "enterprise_status": enterprise_status or "",
+        "locations": locations,
+        "job_type": job_type or "",
+        "description": description or "",
+        "responsibility": responsibility or "",
+        "requirement": requirement or "",
+        "job_benefits": job_benefits or "",
         "points_used": points_used or 0,
     }
 
@@ -186,6 +177,10 @@ def fetch_jobs():
                     jb.highest_wage,
                     jb.lowest_wage,
                     jb.status as job_status,
+                    jb.requirement,
+                    jb.description,
+                    jb.responsibility,
+                    jb.enterprise_benefits as job_benefits,
                     en.name as enterprise_name,
                     en.organization_type,
                     en.is_premium,
@@ -228,15 +223,6 @@ def fetch_jobs():
                 GROUP BY 
                     jb.job_id, 
                     jb.name, 
-                    jb.type, 
-                    jb.deadline, 
-                    jb.education, 
-                    jb.experience,
-                    jb.highest_wage,
-                    jb.lowest_wage,
-                    jb.status,
-                    jb.requirement,
-                    en.enterprise_id,
                     en.name,
                     en.is_premium,
                     en.is_trial,
@@ -264,10 +250,17 @@ def main():
     # Create optimized IVFFlat index
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            # Create schema if it doesn't exist
+            cur.execute(
+                """
+                CREATE SCHEMA IF NOT EXISTS job_schema;
+            """
+            )
+
             # Drop existing index if it exists
             cur.execute(
                 """
-                DROP INDEX IF EXISTS idx_job_listings_embedding;
+                DROP INDEX IF EXISTS job_schema.idx_job_listings_embedding;
             """
             )
 
@@ -275,11 +268,11 @@ def main():
             cur.execute(
                 """
                 CREATE INDEX idx_job_listings_embedding
-                ON langchain_pg_embedding
+                ON job_schema.langchain_pg_embedding
                 USING ivfflat (embedding vector_cosine_ops)
                 WITH (lists = 100)
                 WHERE collection_id = (
-                    SELECT id FROM langchain_pg_collection WHERE name = 'job_listings'
+                    SELECT id FROM job_schema.langchain_pg_collection WHERE name = 'job_listings'
                 );
             """
             )
