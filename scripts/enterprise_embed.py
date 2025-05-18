@@ -136,6 +136,9 @@ if __name__ == "__main__":
 
     # Add embeddings to vector store
     print("Adding embeddings to vector store...")
-    enterprise_vector_store.add_documents(documents)
+    enterprise_vector_store.add_documents(
+        documents,
+        ids=[f'enterprise-{doc.metadata["enterprise_id"]}' for doc in documents],
+    )
 
     print("Enterprise embeddings added successfully.")

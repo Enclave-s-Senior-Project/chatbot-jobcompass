@@ -135,7 +135,6 @@ def create_job_document(job_data: tuple) -> Document:
         "job_id": str(job_id),
         "job_name": job_name,
         "company": enterprise_name or "",
-        "location": location,
         "experience": experience or 0,
         "education": education or "",
         "status": job_status or "",
@@ -245,7 +244,9 @@ def main():
 
     # Add to vector store
     print("Adding documents to vector store...")
-    job_vector_store.add_documents(documents)
+    job_vector_store.add_documents(
+        documents, ids=[f"job-{doc.metadata['job_id']}" for doc in documents]
+    )
 
     # Create optimized IVFFlat index
     with get_db_connection() as conn:
