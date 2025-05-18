@@ -2,7 +2,7 @@ from langchain_core.documents import Document
 from fastapi import APIRouter
 from app.models import Job, Enterprise
 from utils import clean_html, format_salary
-from app.vectorstore import job_vector_store
+from app.vectorstore import job_vector_store, enterprise_vector_store
 
 embedding_router = APIRouter(prefix="/embedding", tags=["embedding"])
 
@@ -69,16 +69,91 @@ def create_job_metadata(job_info: Job) -> dict:
     return metadata
 
 
+def create_job_document(job_info: Job) -> Document:
+    # Create content for embedding
+    content = create_job_content(job_info)
+
+    # Create metadata
+    metadata = create_job_metadata(job_info)
+
+    # Create and return the document
+    return Document(page_content=content, metadata=metadata)
+
+
+def create_enterprise_content(enterprise_info: Enterprise) -> str:
+    content = f"""
+    Company Name: {enterprise_info.name or 'Unknown'}
+    Company Description: {enterprise_info.description or 'Unknown'}
+    Company Vision: {enterprise_info.companyVision or 'Unknown'}
+    Founded In: {str(enterprise_info.foundedIn) if enterprise_info.foundedIn else 'Unknown'}
+    Organization Type: {enterprise_info.organizationType or 'Unknown'}
+    Team Size: {enterprise_info.teamSize or 'Unknown'}
+    Status: {enterprise_info.status or 'Unknown'}
+    Is Premium: {enterprise_info.isPremium or enterprise_info.isTrial}
+    Categories: {", ".join([cat.categoryName for cat in enterprise_info.categories]) if len(enterprise_info.categories) > 0 else "Not specified"}
+    Addresses: {"; ".join([addr.mixedAddress for addr in enterprise_info.addresses]) if len(enterprise_info.addresses) > 0  else "Not specified"}
+    """
+    return content
+
+
+def create_enterprise_metadata(enterprise_info: Enterprise) -> dict:
+    metadata = {
+        "enterprise_id": str(enterprise_info.enterpriseId),
+        "name": enterprise_info.name or "Unknown",
+        "description": enterprise_info.description or "Unknown",
+        "company_vision": enterprise_info.companyVision or "Unknown",
+        "logo_url": enterprise_info.logoUrl or "Unknown",
+        "founded_in": (
+            str(enterprise_info.foundedIn) if enterprise_info.foundedIn else ""
+        ),
+        "organization_type": enterprise_info.organizationType or "Unknown",
+        "team_size": enterprise_info.teamSize or "Unknown",
+        "status": enterprise_info.status or "Unknown",
+        "is_premium": enterprise_info.isPremium or enterprise_info.isTrial,
+        "categories": (
+            [
+                {
+                    "category_id": str(cat.categoryId),
+                    "category_name": cat.categoryName,
+                }
+                for cat in enterprise_info.categories
+            ]
+            if len(enterprise_info.categories) > 0
+            else []
+        ),
+        "addresses": (
+            [
+                {
+                    "address_id": str(addr.addressId),
+                    "mixed_address": addr.mixedAddress,
+                }
+                for addr in enterprise_info.addresses
+            ]
+            if isinstance(enterprise_info.addresses, list)
+            else []
+        ),
+    }
+
+    return metadata
+
+
+def create_enterprise_document(enterprise_info: Enterprise) -> Document:
+    # Create content for embedding
+    content = create_enterprise_content(enterprise_info)
+
+    # Create metadata
+    metadata = create_enterprise_metadata(enterprise_info)
+
+    # Create and return the document
+    return Document(page_content=content, metadata=metadata)
+
+
 @embedding_router.post("/job")
 def create_embedding_job(job_info: Job):
     try:
-        # create document for job
-        content = create_job_content(job_info)
-        metadata = create_job_metadata(job_info)
-
-        document = Document(page_content=content, metadata=metadata)
-
+        document = create_job_document(job_info)
         job_vector_store.add_documents([document], ids=[f"job-{job_info.jobId}"])
+        return {"message": "Job embedding updated successfully"}
     except Exception as e:
         return {"error": str(e)}
 
@@ -86,19 +161,37 @@ def create_embedding_job(job_info: Job):
 @embedding_router.put("/job/{job_id}")
 def update_embedding_job(job_id: str, job_info: Job):
     try:
-        # create document for job
-        content = create_job_content(job_info)
-        metadata = create_job_metadata(job_info)
-
-        document = Document(page_content=content, metadata=metadata)
-
+        job_info.jobId = job_id
+        document = create_job_document(job_info)
         job_vector_store.add_documents([document], ids=[f"job-{job_id}"])
 
-        return True
+        return {"message": "Job embedding updated successfully"}
     except Exception as e:
         return {"error": str(e)}
 
 
 @embedding_router.put("/enterprise/{enterprise_id}")
 def update_embedding_enterprise(enterprise_id: str, enterprise_info: Enterprise):
-    pass
+    try:
+        enterprise_info.enterpriseId = enterprise_id
+        document = create_enterprise_document(enterprise_info)
+
+        enterprise_vector_store.add_documents(
+            [document], ids=[f"enterprise-{enterprise_id}"]
+        )
+        return {"message": "Enterprise embedding updated successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@embedding_router.post("/enterprise")
+def create_embedding_enterprise(enterprise_info: Enterprise):
+    try:
+        document = create_enterprise_document(enterprise_info)
+
+        enterprise_vector_store.add_documents(
+            [document], ids=[f"enterprise-{enterprise_info.enterpriseId}"]
+        )
+        return {"message": "Enterprise embedding updated successfully"}
+    except Exception as e:
+        return {"error": str(e)}
