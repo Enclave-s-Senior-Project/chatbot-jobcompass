@@ -9,15 +9,12 @@ A sophisticated AI-powered chatbot designed to assist users with job search and 
 -   LLM-powered responses with context-aware career guidance
 -   FastAPI REST API with comprehensive documentation
 -   PostgreSQL vector storage for efficient similarity search
--   Modern React frontend with real-time chat interface
--   Responsive design for all devices
 
 ## Prerequisites
 
 -   Python 3.12+
 -   PostgreSQL 12+ with pgvector extension
 -   OpenAI API key
--   Node.js 18+ and npm (for frontend development)
 
 ## Installation
 
@@ -38,20 +35,15 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install Python dependencies
 pip install -r requirements.txt
 
+# Download NLTK stopwords corpus (required for text processing)
+python -c "import nltk; nltk.download('stopwords')"
+
 # Set up environment variables in .env
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
-3. Set up the frontend:
-
-```bash
-# Install frontend dependencies
-cd frontend
-npm install
-```
-
-4. Set up PostgreSQL with pgvector:
+3. Set up PostgreSQL with pgvector:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -76,8 +68,7 @@ VECTOR_DB_AUTOLOAD=true
 VECTOR_DB_SYNCHRONIZE=true
 VECTOR_DB_LOGGING=false
 
-# Frontend
-VITE_API_URL=http://localhost:8000
+
 ```
 
 ## Usage
@@ -86,28 +77,17 @@ VITE_API_URL=http://localhost:8000
 
 ```bash
 # From the root directory
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
 
-2. Start the frontend development server:
-
-```bash
-# From the frontend directory
-npm run dev
-```
-
-3. Access the application:
-    - Frontend: http://localhost:5173
+2. Access the application:
     - API Documentation: http://localhost:8000/docs
 
 ## Project Structure
 
 ```
 jobcompass/
-├── frontend/           # React frontend application
-│   ├── src/           # Source files
-│   ├── public/        # Static assets
-│   └── package.json   # Frontend dependencies
+
 ├── main.py            # FastAPI application entry point
 ├── index.py           # Content indexing and processing
 ├── constants.py       # Configuration and constants
@@ -127,12 +107,6 @@ jobcompass/
 -   OpenAI: Language model integration
 
 ### Frontend
-
--   React: UI library
--   Vite: Build tool and development server
--   TailwindCSS: Utility-first CSS framework
--   TypeScript: Type-safe JavaScript
--   Axios: HTTP client
 
 ## Contributing
 
