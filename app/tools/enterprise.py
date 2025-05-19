@@ -206,7 +206,11 @@ def enterprise_vector_search(query):
                 formatted_results.append(formatted_enterprise)
             else:
                 # Format categories
-                categories_html = format_list_items(meta.get("categories"))
+                categories_html = (
+                    [cat["category_name"] for cat in meta.get("categories")]
+                    if meta.get("categories")
+                    else []
+                )
 
                 # Format addresses
                 addresses_html = "Not specified"
