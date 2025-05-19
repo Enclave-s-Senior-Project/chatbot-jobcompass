@@ -1,3 +1,4 @@
+from typing import List
 from langchain_core.documents import Document
 from fastapi import APIRouter
 from app.models import Job, Enterprise
@@ -193,5 +194,43 @@ def create_embedding_enterprise(enterprise_info: Enterprise):
             [document], ids=[f"enterprise-{enterprise_info.enterpriseId}"]
         )
         return {"message": "Enterprise embedding updated successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@embedding_router.delete("/job/{job_id}")
+def delete_embedding_job(job_id: str):
+    try:
+        job_vector_store.delete([f"job-{job_id}"])
+        return {"message": "Job embedding deleted successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@embedding_router.delete("/job")
+def delete_embedding_jobs(job_ids: List[str]):
+    try:
+        job_vector_store.delete([f"job-{job_id}" for job_id in job_ids])
+        return {"message": "Job embedding deleted successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@embedding_router.delete("/enterprise/{enterprise_id}")
+def delete_embedding_enterprise(enterprise_id: str):
+    try:
+        job_vector_store.delete([f"enterprise-{enterprise_id}"])
+        return {"message": "Enterprise embedding deleted successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@embedding_router.delete("/enterprise")
+def delete_embedding_enterprises(enterprise_ids: List[str]):
+    try:
+        job_vector_store.delete(
+            [f"enterprise-{enterprise_id}" for enterprise_id in enterprise_ids]
+        )
+        return {"message": "Enterprise embedding deleted successfully"}
     except Exception as e:
         return {"error": str(e)}
