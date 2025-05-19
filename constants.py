@@ -3,7 +3,8 @@ import dotenv
 
 dotenv.load_dotenv()
 
-
+print(os.getenv("VECTOR_DB_USERNAME"))
+print(os.getenv("VECTOR_DB_PORT"))
 vector_database_url = (
     f'postgresql://{os.getenv("VECTOR_DB_USERNAME")}:{os.getenv("VECTOR_DB_PASSWORD")}'
     f'@{os.getenv("VECTOR_DB_HOST")}:{os.getenv("VECTOR_DB_PORT", "5432")}'
