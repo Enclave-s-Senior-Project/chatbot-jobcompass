@@ -24,6 +24,7 @@ DB_CONFIG_VECTOR = {
 # File paths for CSV outputs
 DATASET_PATH = os.getenv("DATASET_PATH", str(BASE_DIR / "data" / "jobs.csv"))
 OUTPUT_PATH = os.getenv("OUTPUT_PATH", str(BASE_DIR / "data" / "related_jobs.csv"))
+MODEL_PATH = os.getenv("MODEL_PATH", str(BASE_DIR / "models"))
 
 # API and frontend configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
