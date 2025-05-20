@@ -45,7 +45,7 @@ async def get_top_related_jobs_for_user(job_id: str):
         # Make request to external service
         try:
             response = requests.post(
-                "http://localhost:3001/api/v1/job/related-jobs",
+                f"{JOB_API_URL}/job/related-jobs",
                 json={"related_jobs": related_jobs_ids},
                 headers={"Accept": "*/*", "Content-Type": "application/json"}
             )
@@ -102,7 +102,7 @@ async def get_job_suggestions(input_data: JobSuggestionsInput):
             # Fetch job details from external API
             try:
                 response = requests.post(
-                    "http://localhost:3001/api/v1/job/related-jobs",
+                    f"{JOB_API_URL}/job/related-jobs",
                     json={"related_jobs": related_job_ids},
                     headers={"Accept": "*/*", "Content-Type": "application/json"}
                 )
