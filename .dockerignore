@@ -1,0 +1,62 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.pot
+*.mo
+*.env
+.env.*
+.git
+.gitignore
+tests/
+__init__.pyc
+*.egg-info/
+*.egg
+*.bak
+*.swp
+.DS_Store
+.vscode/
+.idea/
+*.cache
+*.mypy_cache/
+*.pytest_cache/
+node_modules/
+
+# Data and model files
+app/data/
+app/models/job_data.pkl
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Data and model files
+*.csv
+*.pkl
+*.json
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test and script outputs
+*.log
+*.out
+*.tmp
+
+# Environment files
+.env
+.env.*
+
+# Notebooks
+*.ipynb

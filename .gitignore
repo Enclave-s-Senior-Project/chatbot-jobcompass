@@ -11,3 +11,8 @@
 
 # python cache
 __pycache__/
+
+# data files
+*.csv
+*.json
+*.pkl

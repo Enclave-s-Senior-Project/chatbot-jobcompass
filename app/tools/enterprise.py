@@ -1,6 +1,6 @@
 from langchain.agents import Tool
 
-from utils.api_client import get_enterprise_details
+from app.utils import get_enterprise_details
 from ..vectorstore import enterprise_vector_store
 from dotenv import load_dotenv
 import html

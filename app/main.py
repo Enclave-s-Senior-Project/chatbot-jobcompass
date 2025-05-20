@@ -1,6 +1,5 @@
 # app/main.py
 import logging
-import asyncio
 import os
 import pickle
 from contextlib import asynccontextmanager
@@ -13,8 +12,8 @@ from apscheduler.triggers.cron import CronTrigger
 import pandas as pd
 import psycopg2
 from pydantic import BaseModel
-from app.utils.nltk_setup import setup_nltk_data
-from app.config.config import DB_CONFIG_PRIMARY, DATASET_PATH, OUTPUT_PATH, MODEL_PATH
+from app.utils import setup_nltk_data
+from app.config.config import DB_CONFIG_PRIMARY, DATASET_PATH, MODEL_PATH
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

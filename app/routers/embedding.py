@@ -2,7 +2,7 @@ from typing import List
 from langchain_core.documents import Document
 from fastapi import APIRouter
 from app.models import Job, Enterprise
-from utils import clean_html, format_salary
+from app.utils import clean_html, format_salary
 from app.vectorstore import job_vector_store, enterprise_vector_store
 
 embedding_router = APIRouter(prefix="/embedding", tags=["embedding"])

@@ -3,8 +3,7 @@ from langchain_core.documents import Document
 from app.vectorstore import job_vector_store
 from constants import main_database_url
 from contextlib import contextmanager
-from utils.clean_html import clean_html
-from utils.format_salary import format_salary
+from app.utils import clean_html, format_salary
 import psycopg2
 import torch
 

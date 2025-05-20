@@ -2,8 +2,7 @@ from langchain.agents import Tool
 from app.vectorstore import job_vector_store
 from dotenv import load_dotenv
 from os import getenv
-from utils.api_client import get_job_details
-from utils.format_salary import format_salary
+from app.utils import get_job_details, format_salary
 import html
 
 load_dotenv()
