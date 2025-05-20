@@ -3,7 +3,8 @@ from pydantic import BaseModel
 import pandas as pd
 import requests
 import logging
-from app.config.config import OUTPUT_PATH
+import ast
+from app.config.config import OUTPUT_PATH,JOB_API_URL
 from app.services.job_service import get_related_jobs_for_ids, get_related_jobs_for_multiple
 
 # Set up logging
