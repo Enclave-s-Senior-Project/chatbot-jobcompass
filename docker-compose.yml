@@ -15,8 +15,8 @@ services:
         ports:
             - "${VECTOR_DB_PORT}:5432"
         volumes:
-            - pgdata:/var/lib/postgresql/data
+            - vector_pgdata:/var/lib/postgresql/data
 
 volumes:
-    pgdata:
+    vector_pgdata:
         driver: local
