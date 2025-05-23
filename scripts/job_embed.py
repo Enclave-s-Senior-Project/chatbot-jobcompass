@@ -1,11 +1,9 @@
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from app.vectorstore import job_vector_store
 from constants import main_database_url
 from contextlib import contextmanager
-from app.utils import clean_html, format_salary
+from app.utils import clean_html
 import psycopg2
-import torch
 
 
 # Database connection
@@ -16,14 +14,6 @@ def get_db_connection():
         yield conn
     finally:
         conn.close()
-
-
-# Enhanced embedding model with better job-specific capabilities
-embeddings_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L12-v2",
-    model_kwargs={"device": "cuda" if torch.cuda.is_available() else "cpu"},
-    encode_kwargs={"normalize_embeddings": True, "precision": "fp16"},
-)
 
 
 def create_job_document(job_data: tuple) -> Document:
@@ -96,37 +86,60 @@ def create_job_document(job_data: tuple) -> Document:
 
                 location = ""
                 if city and country:
-                    location = f"{city}, {country}"
+                    location = f"In {country}, {city}"
                 elif city:
-                    location = city
+                    location = "In " + city
                 elif country:
-                    location = country
+                    location = "In " + country
                 locations.append(location)
         except (TypeError, AttributeError):
             locations = []
 
-    # Create structured content
+    # --- ADVANCED EMBEDDING CONTENT FOR MAXIMUM PRECISION ---
+    # Normalize and concatenate all key fields for a strong keyword signal
+    def norm(x):
+        return str(x).lower().strip()
+
+    all_keywords = (
+        [norm(job_name)]
+        + [norm(cat) for cat in categories]
+        + [norm(spec) for spec in specializations]
+        + [norm(tag) for tag in tags]
+    )
+    all_keywords += [norm(requirement), norm(description)]
+    all_keywords += [norm(loc) for loc in locations]
+    keyword_blob = " ".join([w for w in all_keywords if w])
+
+    # Repeat important fields for weighting
+    repeated_title = (job_name + " ") * 5
+    repeated_categories = (", ".join(categories) + " ") * 4 if categories else ""
+    repeated_specializations = (
+        (", ".join(specializations) + " ") * 4 if specializations else ""
+    )
+    repeated_tags = (", ".join(tags) + " ") * 3 if tags else ""
+    repeated_location = (" ;".join(locations) + "; ") * 2 if locations else "Remote "
+    # Compose a skills line if possible
+    skills_from_tags = ", ".join(tags)
+    skills_from_requirements = clean_html(requirement)
+    skills_line = f"Skills: {skills_from_tags} {skills_from_requirements}".strip()
+    # Compose the content
     content = f"""
-    Job Title: {job_name}
-    Type: {job_type}
+    Priority Points: {points_used};
+    Title: {repeated_title};
+    Industries: {repeated_categories};
+    Majorities/Major: {repeated_specializations};
+    Related Keywords: {repeated_tags};
+    Location: {repeated_location};
+    {keyword_blob}
     Company: {enterprise_name}
-    Company Type: {organization_type}
-    Company Status: {enterprise_status}
-    Location: {" ;".join(locations) if len(locations) > 0 else "Remote"}
-    Salary Range: {format_salary(lowest_wage, highest_wage)}
-    Education: {education}
-    Experience: {experience} years
-    Deadline: {deadline}
-    Status: {job_status}
-    Categories: {', '.join(categories)}
-    Specializations: {', '.join(specializations)}
-    Tags: {', '.join(tags)}
-    Description: {clean_html(description)}
-    Responsibilities: {clean_html(responsibility)}
+    Type: {job_type}
+    {skills_line}
     Requirements: {clean_html(requirement)}
-    Benefits: {clean_html(job_benefits)}
-    Priority: {is_premium or is_trial}
-    Boosted Points Used: {points_used or 0}
+    Experience: {experience} years
+    Education: {education}
+    Deadline: {deadline}
+    Salary Range: {lowest_wage} - {highest_wage} (USD)
+    Company Type: {organization_type}
     """
 
     # Enhanced metadata
