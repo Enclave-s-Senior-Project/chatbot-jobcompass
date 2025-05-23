@@ -36,7 +36,9 @@ def get_job_details(job_id):
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
 
-        return response.json()
+        results = response.json()
+        data = results.get("payload", {}).get("value", {})
+        return data
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching job details for job ID {job_id}: {str(e)}")
         return None
@@ -148,5 +150,41 @@ def get_enterprise_details(enterprise_id) -> Optional[EnterpriseResponse]:
     except requests.exceptions.RequestException as e:
         logger.error(
             f"Error fetching enterprise details for enterprise ID {enterprise_id}: {str(e)}"
+        )
+        return None
+
+
+def get_profile_details(profile_id):
+    """
+    Fetch detailed profile information from the JobCompass API.
+
+    Args:
+        profile_id: The ID of the profile to fetch details for
+
+    Returns:
+        dict: Full profile details or None if request failed
+    """
+    api_url = os.getenv("JOB_API_URL")
+    if not api_url:
+        logger.error("JOB_API_URL environment variable not set")
+        return None
+
+    try:
+        url = f"{api_url}/user/{profile_id}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('JOB_API_TOKEN')}",
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        results = response.json()
+        data = results.get("payload", {}).get("value", {})
+
+        return data
+    except requests.exceptions.RequestException as e:
+        logger.error(
+            f"Error fetching profile details for profile ID {profile_id}: {str(e)}"
         )
         return None
