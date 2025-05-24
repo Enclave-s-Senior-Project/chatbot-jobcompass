@@ -81,7 +81,7 @@ app.include_router(embedding_router)
 app.include_router(suggest_router)
 
 
-# Fetch Jobs Function
+# # Fetch Jobs Function
 def fetch_jobs():
     logger.info("Starting fetch_jobs: Connecting to primary database...")
     conn = psycopg2.connect(**DB_CONFIG_PRIMARY)
@@ -89,7 +89,7 @@ def fetch_jobs():
 
     try:
         query = """
-        SELECT 
+        SELECT
             j.job_id,
             j.name AS job_title,
             j.description AS job_description,

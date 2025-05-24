@@ -7,8 +7,9 @@ from app.agent.core import route_to_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import HumanMessage, AIMessage
 
-from app.utils import get_enterprise_details
-
+from app.tools import enterprise
+from app.utils import clean_html
+from app.utils.api_client import get_profile_details
 
 chat_router = APIRouter(prefix="/conversation")
 
@@ -23,6 +24,8 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     query: str
     chat_history: Optional[List[Message]] = None
+    profileId: Optional[str] = None
+    enterpriseId: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -57,7 +60,12 @@ async def chat(request: ChatRequest):
                 memory.save_context({"input": ""}, {"output": msg.content})
 
     # Use the agent router to direct to the appropriate specialized agent
-    response = route_to_agent(request.query, chat_history)
+    response = route_to_agent(
+        request.query,
+        chat_history,
+        profileId=request.profileId,
+        enterpriseId=request.enterpriseId,
+    )
 
     # Get updated chat history
     history = []

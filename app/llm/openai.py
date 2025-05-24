@@ -6,6 +6,6 @@ import os
 llm = ChatOpenAI(
     model_name="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.5,
-    max_retries=3,
+    temperature=0.3,
+    max_retries=5,
 )
