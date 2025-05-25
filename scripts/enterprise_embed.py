@@ -1,6 +1,7 @@
 # Database connection
 from contextlib import contextmanager
 from langchain_core.documents import Document
+from app.utils import clean_html
 from constants import main_database_url
 from app.vectorstore import enterprise_vector_store
 
@@ -40,6 +41,8 @@ def fetch_enterprises() -> list:
                 )) as enterprise_categories,
                 JSON_AGG(JSONB_BUILD_OBJECT(
                     'address_id', addr.address_id,
+                    'country', addr.country,
+                    'city', addr.city,
                     'mixed_address', addr.mixed_address
                 )) as enterprise_addresses
             FROM enterprises en
@@ -85,25 +88,41 @@ def create_enterprise_document(enterprise_data: tuple) -> Document:
 
     addresses = (
         [
-            {"address_id": addr["address_id"], "mixed_address": addr["mixed_address"]}
+            {
+                "address_id": addr.get("address_id", ""),
+                "country": addr.get("country", ""),
+                "city": addr.get("city", ""),
+                "mixed_address": addr.get("mixed_address", ""),
+            }
             for addr in enterprise_addresses
         ]
         if isinstance(enterprise_addresses, list)
         else []
     )
 
+    repeated_addresses = (
+        "; ".join(
+            [f"In {addr.get('country')}, {addr.get('city')}" for addr in addresses]
+        )
+        + " "
+    ) * 3
+
+    repeated_industries = (
+        ", ".join([cat["category_name"] for cat in categories]) + " "
+    ) * 3
+
     # Create content for embedding
     content = f"""
         Company Name: {name}
-        Company Description: {description}
-        Company Vision: {company_vision}
+        Company Description: {clean_html(description)}
+        Company Vision: {clean_html(company_vision)}
         Founded In: {founded_in}
         Organization Type: {organization_type}
         Team Size: {team_size}
         Status: {status}
         Is Premium: {is_premium or is_trial}
-        Categories: {", ".join([cat["category_name"] for cat in categories]) if categories else "Not specified"}
-        Addresses: {"; ".join([addr["mixed_address"] for addr in addresses]) if addresses else "Not specified"}
+        Industries/Fields: {repeated_industries}
+        Addresses: {repeated_addresses}
     """
 
     # Create metadata

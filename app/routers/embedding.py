@@ -209,17 +209,39 @@ def create_job_document(job_info: Job) -> Document:
 
 def create_enterprise_content(enterprise_info: Enterprise) -> str:
     try:
+        locations = (
+            [
+                "In " + addr.country + ", " + addr.city
+                for addr in enterprise_info.addresses
+            ]
+            if enterprise_info.addresses
+            and isinstance(enterprise_info.addresses, list)
+            and len(enterprise_info.addresses) > 0
+            else []
+        )
+
+        categories = (
+            [cat.categoryName for cat in enterprise_info.categories]
+            if enterprise_info.categories
+            and isinstance(enterprise_info.categories, list)
+            and len(enterprise_info.categories) > 0
+            else []
+        )
+
+        repeated_addresses = ("; ".join(locations) + " ") * 3
+        repeated_industries = (", ".join(categories) + " ") * 3
+
         content = f"""
         Company Name: {enterprise_info.name or 'Unknown'}
-        Company Description: {enterprise_info.description or 'Unknown'}
-        Company Vision: {enterprise_info.companyVision or 'Unknown'}
+        Company Description: {clean_html(enterprise_info.description) or 'Unknown'}
+        Company Vision: {clean_html(enterprise_info.companyVision) or 'Unknown'}
         Founded In: {str(enterprise_info.foundedIn) if enterprise_info.foundedIn else 'Unknown'}
         Organization Type: {enterprise_info.organizationType or 'Unknown'}
         Team Size: {enterprise_info.teamSize or 'Unknown'}
         Status: {enterprise_info.status or 'Unknown'}
         Is Premium: {enterprise_info.isPremium or enterprise_info.isTrial}
-        Categories: {", ".join([cat.categoryName for cat in enterprise_info.categories]) if len(enterprise_info.categories) > 0 else "Not specified"}
-        Addresses: {"; ".join([addr.mixedAddress for addr in enterprise_info.addresses]) if len(enterprise_info.addresses) > 0  else "Not specified"}
+        Industries/Fields: {repeated_industries}
+        Addresses: {repeated_addresses}
         """
         return content
     except Exception as e:
@@ -257,11 +279,14 @@ def create_enterprise_metadata(enterprise_info: Enterprise) -> dict:
                 [
                     {
                         "address_id": str(addr.addressId),
+                        "country": addr.country,
+                        "city": addr.city,
                         "mixed_address": addr.mixedAddress,
                     }
                     for addr in enterprise_info.addresses
                 ]
                 if isinstance(enterprise_info.addresses, list)
+                and len(enterprise_info.addresses) > 0
                 else []
             ),
         }
