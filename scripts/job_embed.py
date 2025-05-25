@@ -1,4 +1,5 @@
 from langchain_core.documents import Document
+from app.services.preprocess import preprocess_text
 from app.vectorstore import job_vector_store
 from constants import main_database_url
 from contextlib import contextmanager
@@ -95,19 +96,14 @@ def create_job_document(job_data: tuple) -> Document:
         except (TypeError, AttributeError):
             locations = []
 
-    # --- ADVANCED EMBEDDING CONTENT FOR MAXIMUM PRECISION ---
-    # Normalize and concatenate all key fields for a strong keyword signal
-    def norm(x):
-        return str(x).lower().strip()
-
     all_keywords = (
-        [norm(job_name)]
-        + [norm(cat) for cat in categories]
-        + [norm(spec) for spec in specializations]
-        + [norm(tag) for tag in tags]
+        [preprocess_text(job_name)]
+        + [preprocess_text(cat) for cat in categories]
+        + [preprocess_text(spec) for spec in specializations]
+        + [preprocess_text(tag) for tag in tags]
     )
-    all_keywords += [norm(requirement), norm(description)]
-    all_keywords += [norm(loc) for loc in locations]
+    all_keywords += [preprocess_text(requirement), preprocess_text(description)]
+    all_keywords += [preprocess_text(loc) for loc in locations]
     keyword_blob = " ".join([w for w in all_keywords if w])
 
     # Repeat important fields for weighting
