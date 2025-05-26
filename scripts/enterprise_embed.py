@@ -144,7 +144,7 @@ def create_enterprise_document(enterprise_data: tuple) -> Document:
     return Document(page_content=content, metadata=metadata)
 
 
-if __name__ == "__main__":
+def main():
     # Fetch enterprise data
     print("Fetching enterprise data from the database...")
     enterprises = fetch_enterprises()
