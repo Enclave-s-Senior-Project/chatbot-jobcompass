@@ -25,27 +25,27 @@ job_search_agent = create_openai_functions_agent(
     llm, [job_tool, db_tool], job_search_prompt
 )
 job_search_executor = AgentExecutor(
-    agent=job_search_agent, tools=[job_tool, db_tool], verbose=True
+    agent=job_search_agent, tools=[job_tool, db_tool], verbose=False
 )
 
 enterprise_search_agent = create_openai_functions_agent(
     llm, [enterprise_tool, db_tool], enterprise_search_prompt
 )
 enterprise_search_executor = AgentExecutor(
-    agent=enterprise_search_agent, tools=[enterprise_tool, db_tool], verbose=True
+    agent=enterprise_search_agent, tools=[enterprise_tool, db_tool], verbose=False
 )
 
 website_content_agent = create_openai_functions_agent(
     llm, [website_tool, db_tool], website_content_prompt
 )
 website_content_executor = AgentExecutor(
-    agent=website_content_agent, tools=[website_tool, db_tool], verbose=True
+    agent=website_content_agent, tools=[website_tool, db_tool], verbose=False
 )
 
 # General agent for fallback or uncertain cases
 tools = [website_tool, job_tool, db_tool]
 agent = create_openai_functions_agent(llm, tools, agent_prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
 
 
 def summarize_profile_info(profileId: Optional[str] = None) -> str:
