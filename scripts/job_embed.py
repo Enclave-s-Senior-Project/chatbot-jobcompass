@@ -256,37 +256,6 @@ def main():
         documents, ids=[f"job-{doc.metadata['job_id']}" for doc in documents]
     )
 
-    # Create optimized IVFFlat index
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            # Create schema if it doesn't exist
-            cur.execute(
-                """
-                CREATE SCHEMA IF NOT EXISTS job_schema;
-            """
-            )
-
-            # Drop existing index if it exists
-            cur.execute(
-                """
-                DROP INDEX IF EXISTS job_schema.idx_job_listings_embedding;
-            """
-            )
-
-            # Create optimized index
-            cur.execute(
-                """
-                CREATE INDEX idx_job_listings_embedding
-                ON job_schema.langchain_pg_embedding
-                USING ivfflat (embedding vector_cosine_ops)
-                WITH (lists = 100)
-                WHERE collection_id = (
-                    SELECT id FROM job_schema.langchain_pg_collection WHERE name = 'job_listings'
-                );
-            """
-            )
-            conn.commit()
-
     print(
         f"Successfully indexed {len(documents)} jobs into pgvector collection 'job_listings'."
     )
