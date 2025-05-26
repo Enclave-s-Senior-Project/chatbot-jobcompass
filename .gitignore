@@ -17,3 +17,5 @@ __pycache__/
 *.json
 *.pkl
 app/data/*
+
+!website_content.csv
