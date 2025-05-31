@@ -14,7 +14,7 @@ agent_prompt = ChatPromptTemplate.from_messages(
             - EnterpriseSearch: For enterprise search queries (e.g., company name, company description, company address, company industry, etc.).
             - Database: For specific data (e.g., job details, enterprise details) via SELECT queries.
             
-            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, OR WEBSITE CONTENT. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.
+            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, WEBSITE CONTENT (Platform, Authors, Tech Stack, ...) OR ANY INFORMATION RELATING TO THE WEBSITE. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".
             
             ALWAYS RESPOND WITH PROPERLY FORMATTED HTML. Your response will be directly rendered using innerHTML.
             Use proper HTML tags like <p>, <h3>, <ul>, <li>, <strong>, <em>, <hr>, <div>, <span>, etc.
@@ -47,7 +47,7 @@ job_search_prompt = ChatPromptTemplate.from_messages(
             You are a specialized JobCompass job search agent helping users find relevant jobs.
             You have access to the JobSearch tool and Database tool (prefer JobSearch tool) that uses vector search to find matching jobs.
 
-            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, OR WEBSITE CONTENT. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.
+            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, WEBSITE CONTENT (Platform, Authors, Tech Stack, ...) OR ANY INFORMATION RELATING TO THE WEBSITE. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".
 
             ALWAYS RESPOND WITH PROPERLY FORMATTED HTML. Your response will be directly rendered using innerHTML.
             Use proper HTML tags like <p>, <h3>, <ul>, <li>, <strong>, <em>, <hr>, <div>, <span>, etc.
@@ -99,7 +99,7 @@ enterprise_search_prompt = ChatPromptTemplate.from_messages(
             ALWAYS PREFER ENTERPRISE TOOLS OVER DATABASE TOOL. Use enterprise tools as your primary method for finding company information.
             Only use the Database tool when enterprise tools cannot provide the specific data requested or when explicitly asked for raw database queries.
 
-            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, OR WEBSITE CONTENT (Authors, Tech Stack, ...). RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".
+            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, WEBSITE CONTENT (Platform, Authors, Tech Stack, ...) OR ANY INFORMATION RELATING TO THE WEBSITE. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".
 
             ALWAYS RESPOND WITH PROPERLY FORMATTED HTML. Your response will be directly rendered using innerHTML.
             Use proper HTML tags like <p>, <h3>, <ul>, <li>, <strong>, <em>, <hr>, <div>, <span>, etc.
@@ -160,7 +160,7 @@ website_content_prompt = ChatPromptTemplate.from_messages(
             You are a specialized JobCompass website content agent helping users find information from the JobCompass website.
             You have access to the WebsiteSearch tool that can search through website content.
 
-            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, OR WEBSITE CONTENT. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.
+            ONLY ANSWER RELATES TO JOBS, ENTERPRISES, WEBSITE CONTENT (Platform, Authors, Tech Stack, ...) OR ANY INFORMATION RELATING TO THE WEBSITE. RESPOND WITH "I'm the JobCompass assistant, here to help with questions about jobs, enterprises, and websites. Please feel free to reach out with any inquiries.".
 
             ALWAYS RESPOND WITH PROPERLY FORMATTED HTML. Your response will be directly rendered using innerHTML.
             Use proper HTML tags like <p>, <h3>, <ul>, <li>, <strong>, <em>, <hr>, <div>, <span>, etc.

@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting scheduler...")
     scheduler.add_job(
         run_job_training,
-        trigger=CronTrigger(hour=1, minute=0),
+        trigger=CronTrigger(hour=0, minute=0, day="*"),
         id="job_training",
         replace_existing=True,
     )
